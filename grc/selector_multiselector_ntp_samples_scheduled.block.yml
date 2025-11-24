@@ -1,0 +1,129 @@
+id: selector_multiselector_ntp_samples_scheduled
+label: Multiselector NTP Samples Scheduled
+category: '[selector]'
+file_format: 1
+
+templates:
+  imports: from gnuradio import selector
+  make: |-
+    selector.multiselector_ntp_samples_scheduled(
+        num_outputs=${num_outputs},
+        switch_period_ms=${switch_period_ms},
+        switch_delay_ms=${switch_delay_ms},
+        samp_rate=${samp_rate},
+        ntp_start_time_str=${ntp_start_time_str},
+        ntp_servers=${ntp_servers},
+        sync_interval=${sync_interval}
+    )
+
+parameters:
+- id: num_outputs
+  label: Number of Active Transmitters
+  dtype: int
+  default: 3
+  
+- id: switch_period_ms
+  label: Transmitter Period (ms)
+  dtype: int
+  default: 1000
+  
+- id: switch_delay_ms
+  label: Silence Period (ms)
+  dtype: int
+  default: 1000
+  
+- id: ntp_start_time_str
+  label: Start Time (HH:MM:SS)
+  dtype: string
+  default: '""'
+  
+- id: samp_rate
+  label: Sample Rate
+  dtype: float
+  default: 2.4e6 
+ 
+- id: ntp_servers
+  label: NTP Servers
+  dtype: string
+  default: '""'
+  hide: part
+  
+- id: sync_interval
+  label: NTP Sync Interval (s)
+  dtype: int
+  default: 60
+  hide: part
+
+
+inputs:
+- label: in
+  domain: stream
+  dtype: complex
+
+outputs:
+- label: out
+  dtype: complex
+  domain: stream
+  multiplicity: ${num_outputs}
+- label: silence
+  domain: stream
+  dtype: complex
+
+documentation: |-
+  Multiselector with NTP-synchronized samples-scheduling for multiple transmitters.
+  
+  This block cyclically switches a complex input signal among multiple output ports
+  based on a precise NTP-synchronized timing schedule. It alternates between active
+  transmitter outputs and a silence period output.
+  
+  Key Features:
+  - NTP synchronization for precise timing across multiple devices
+  - Configurable number of active transmitters (num_outputs parameter)
+  - Automatic silence periods between transmitter switches
+  - Pre-computed schedule table for deterministic timing
+  - Support for custom NTP servers
+  
+  Parameters:
+  - num_outputs: Number of active transmitters (total outputs = num_outputs + 1)
+  - switch_period_ms: Duration each transmitter is active (milliseconds)
+  - switch_delay_ms: Duration of silence between switches (milliseconds)
+  - ntp_start_time_str: Start time in HH:MM:SS format (empty = next minute)
+  - ntp_servers: Comma-separated NTP servers (empty = use defaults)
+  - sync_interval: NTP resync interval in seconds
+  
+  Output Mapping:
+  - tx_0 to tx_N-1: Active transmitter outputs
+  - silence: Output active during silence periods
+  
+  NTP Server Examples:
+  - Default: "time.google.com,pool.ntp.org,time.cloudflare.com"
+  - Italian: "ntp1.inrim.it,ntp2.inrim.it,time.google.com"
+  - Custom: "192.168.1.100,ntp.company.com,time.google.com"
+  
+  Timing Behavior:
+  If start_time is "14:30:00":
+  - If current time < 14:30:00 today: starts at 14:30:00 today
+  - If current time > 14:30:00 today: starts at 14:30:00 tomorrow
+  - If empty: starts at next minute mark
+  
+  Example Sequence (3 transmitters, 1000ms active, 200ms silence):
+  14:30:00.000 → Transmitter 0 (tx_0) for 1000ms
+  14:30:01.000 → Silence (silence) for 200ms
+  14:30:01.200 → Transmitter 1 (tx_1) for 1000ms
+  14:30:02.200 → Silence (silence) for 200ms
+  14:30:02.400 → Transmitter 2 (tx_2) for 1000ms
+  14:30:03.400 → Silence (silence) for 200ms
+  14:30:03.600 → Transmitter 0 (tx_0) for 1000ms (cycle repeats)
+  
+  Runtime Methods Available:
+  - set_ntp_start_time(time_str): Change start time
+  - force_ntp_sync(): Force immediate NTP synchronization
+  - get_ntp_status(): Get synchronization status
+  - set_ntp_servers(servers_list): Change NTP servers
+  - print_schedule_sample(num): Print schedule entries for debugging
+  
+  Prerequisites:
+  - NTP client installed (ntp, chrony, or ntpdate)
+  - Network access to NTP servers
+  - Proper system time configuration
+
