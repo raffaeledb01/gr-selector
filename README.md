@@ -55,7 +55,7 @@ With 3 transmitters, `switch_period_ms=1000` ms and `switch_delay_ms=200` ms sta
 ```bash
 mkdir build
 cd build
-cmake ..
+cmake ../
 make
 sudo make install
 sudo ldconfig
